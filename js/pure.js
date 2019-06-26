@@ -122,52 +122,26 @@ if (typeof Math.sign == "undefined") {
 
 
 
+var low_color = [200, 60, 0];
+var high_color = [255, 255, 100];
+let hex2 = number => number <= 0x10 ? `0${number.toString(16)}` : number.toString(16);
 
-
-
-var Circle = function (c, r, cor, cof) { // Fix CoR & CoF
+var Particle = function (c, r, v) {
     this.c = c;
     this.r = r;
-    this.colour = "#" + (Math.round(((this.r - 15) /10) * 255)).toString(16) + "0000"; // based off of r, which seems to change sometimes?
+    this.v = v;
     this.m = r * r * Math.PI;
-    this.v = new Vector();
     this.a = new Vector();
-    this.cor = cor;
-    this.cof = cof;
+
+
+    var proportion = r > 100.0 ? 1.0 : r/80.0;
+    var colors = [
+        Math.floor(low_color[0]*(1-proportion) + high_color[0]*proportion),
+        Math.floor(low_color[1]*(1-proportion) + high_color[1]*proportion),
+        Math.floor(low_color[2]*(1-proportion) + high_color[2]*proportion),
+    ];
+    this.colour = "#" + hex2(colors[0]) + hex2(colors[1]) + hex2(colors[2]) + "aa";
 };
-
-
-function checkCCCol(a, b) {
-    var d = a.c.sub(b.c);
-    var r = a.r + b.r;
-    if (d.lengthSq() < r * r) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-function resCCCol(a, b) {
-    var d = a.c.sub(b.c);
-
-    d.set(d.normalize());
-
-    var v = b.v.sub(a.v);
-
-    var dot = d.dot(v);
-
-    if (dot >= 0) {
-        var tm = a.m + b.m;
-
-        var c = d.mul(2 * dot / tm);
-
-
-
-        a.v.set(a.v.add(c.mul(b.m)));
-        b.v.set(b.v.sub(c.mul(a.m)));
-    }
-}
-
 
 
 
@@ -187,11 +161,7 @@ var ctx = canvas.getContext("2d");
 var w = canvas.width;
 var h = canvas.height;
 
-var mouse = {
-    p: new Vector()
-};
-
-var gravity = 0.5;
+var gravity = 1;
 
 var particles = [];
 var newParticles = [];
@@ -202,14 +172,21 @@ window.addEventListener("mousemove", function (e) {
 });
 
 window.addEventListener("mousedown", function (e) {
-    mouse.p.x = e.pageX - canvas.getBoundingClientRect().left;
-    mouse.p.y = e.pageY - canvas.getBoundingClientRect().top;
+    this.click_start = Date.now();
+    this.x_start = e.pageX - canvas.getBoundingClientRect().left;
+    this.y_start = e.pageY - canvas.getBoundingClientRect().top;
 
-    newParticles.push(new Circle(mouse.p.clone(), Math.random() * 10 + 15, 0.95, 0.95));
 });
 
 window.addEventListener("mouseup", function (e) {
+    var mass = (Date.now() - this.click_start)/30;
 
+    x_end = e.pageX - canvas.getBoundingClientRect().left;
+    y_end = e.pageY - canvas.getBoundingClientRect().top;
+    v_x = (this.x_start - x_end)/10;
+    v_y = (this.y_start - y_end)/10;
+
+    newParticles.push(new Particle(new Vector(x_end, y_end), mass, new Vector(v_x, v_y)));
 });
 
 
@@ -233,22 +210,6 @@ function compute_forces() {
 
 }
 
-
-function do_collisions() {
-    for (var i = 0; i < particles.length; i++) {
-        var p = particles[i];
-        for (var j = 0; j < i; j++) {
-            var p2 = particles[j];
-
-            if (checkCCCol(p, p2)) {
-                resCCCol(p, p2);
-            }
-        }
-
-    }
-}
-
-
 function do_physics(dt) {
     for (var i1 = 0; i1 < particles.length; i1++) {
         var p1 = particles[i1];
@@ -263,7 +224,6 @@ function do_physics(dt) {
         var p3 = particles[i3];
         p3.c.set(p3.c.add(p3.v.mul(0.5 * dt)));
     }
-    do_collisions();
 }
 
 function update() {
