@@ -128,6 +128,7 @@ if (typeof Math.sign == "undefined") {
 var Circle = function (c, r, cor, cof) { // Fix CoR & CoF
     this.c = c;
     this.r = r;
+    this.colour = "#" + (Math.round(((this.r - 15) /10) * 255)).toString(16) + "0000"; // based off of r, which seems to change sometimes?
     this.m = r * r * Math.PI;
     this.v = new Vector();
     this.a = new Vector();
@@ -193,6 +194,7 @@ var mouse = {
 var gravity = 0.5;
 
 var particles = [];
+var newParticles = [];
 
 
 window.addEventListener("mousemove", function (e) {
@@ -203,7 +205,7 @@ window.addEventListener("mousedown", function (e) {
     mouse.p.x = e.pageX - canvas.getBoundingClientRect().left;
     mouse.p.y = e.pageY - canvas.getBoundingClientRect().top;
 
-    particles.push(new Circle(mouse.p.clone(), Math.random() * 10 + 15, 0.95, 0.95));
+    newParticles.push(new Circle(mouse.p.clone(), Math.random() * 10 + 15, 0.95, 0.95));
 });
 
 window.addEventListener("mouseup", function (e) {
@@ -266,8 +268,14 @@ function do_physics(dt) {
 
 function update() {
 
-    for (var k = 0; k < 4; k++) {
-        do_physics(1.0 / 4);
+    for(var newParticlesPos = 0; newParticlesPos < newParticles.length; newParticlesPos++)
+    {
+        particles.push(newParticles[newParticlesPos]);
+    }
+    newParticles = [];
+
+    for (var k = 0; k < 4; k++) { // increase the greater than value to increase simulation step rate
+        do_physics(1.0 / 8); // increase the divisor to increase accuracy and decrease simulation speed
     }
 
     render();
@@ -283,7 +291,7 @@ function render() {
 
         ctx.beginPath();
         ctx.arc(p.c.x, p.c.y, p.r, 0, Math.PI * 2, false);
-        ctx.fillStyle = "#000";
+        ctx.fillStyle = p.colour;
         ctx.fill();
         ctx.closePath();
     }

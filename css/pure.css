@@ -7,13 +7,13 @@ html, body {
     border: 3px solid #F00;
     border-radius: 0px;
     position: fixed;
-    width: 500px;
-    height: 400px;
-    left: 50%;
-    top: 50%;
-    margin-left: -250px;
-    margin-top: -200px;
-    padding: 0px;
+
+    left: 50vw;
+    top: 50vh;
+    margin-left: -350px;
+    margin-top: -350px;
+
+    padding: 0;
     background-color: #FFF;
     cursor: default;
     z-index: 0;
